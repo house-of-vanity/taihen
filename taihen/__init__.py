@@ -13,7 +13,7 @@ from taihen.music_api import TaihenPlayer
 from taihen.ui import player_ui
 from taihen.settings import PL_DIR
 
-#Palette for the urwid UI
+# Palette for the urwid UI
 palette = [
     ('reversed', 'standout', ''),
     ('b', 'black', 'dark gray'),

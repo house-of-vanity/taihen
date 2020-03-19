@@ -21,6 +21,7 @@ from .settings import PL_DIR
 from .library import Library
 
 
+
 def structure_time(seconds, minutes, hours):
     if (seconds < 10 and hours == 0 and minutes < 10):
         structured_time = "0" + str(minutes) + ":0" + str(seconds)
@@ -47,36 +48,36 @@ def structure_time_len(seconds, minutes):
 
 class TaihenPlayer:
     def __init__(self):
-        #URL of list
+        # URL of list
         self.url = ""
-        #Player volume
+        # Player volume
         self.volume = 70
-        #Set unlock on continous_player
+        # Set unlock on continous_player
         self._lock = False
-        #Semaphore for the shared _lock variable
+        # Semaphore for the shared _lock variable
         self._lock_mutex = threading.Semaphore()
-        #Open the paylists dict from pickle here
+        # Open the paylists dict from pickle here
         self.saved_lists = []
-        #Currently playing song name
+        # Currently playing song name
         self._currentSong = "None"
-        ##Current song index
+        # Current song index
         self.index = 0
-        ##New playlist?
+        # New playlist?
         self._new = True
-        #Define queue length
+        # Define queue length
         self.queue_len = 0
-        #Define repeat mode 1:Repeat off | 2:Repeat current song | 3:Repeat list.
-        #Default mode is 1
+        # Define repeat mode 1:Repeat off | 2:Repeat current song | 3:Repeat list.
+        # Default mode is 1
         self.repeat_mode = 1
-        #Define random 0:Random off | 1:Random on
+        # Define random 0:Random off | 1:Random on
         self.random = 0
-        #This lock is for locking in case music is paused intentionlly
+        # This lock is for locking in case music is paused intentionlly
         self._togglerLock = False
-        #Semaphore for the shared _togglerLock variable
+        # Semaphore for the shared _togglerLock variable
         self._togglerLock_mutex = threading.Semaphore()
-        #Make time details dict
+        # Make time details dict
         self.time_details = {}
-        #Random on or off?
+        # Random on or off?
         self._random = False
         # This is changed to true by the continous player and then back to
         # false by an event handler
@@ -84,7 +85,7 @@ class TaihenPlayer:
         self.path = os.path.split(os.path.abspath(__file__))[0]
         for every_file in os.listdir(PL_DIR):
             self.saved_lists.append(every_file)
-        #Initialize MPV player
+        # Initialize MPV player
         locale.setlocale(locale.LC_NUMERIC, "C")
         self.player = None
 
@@ -179,7 +180,7 @@ class TaihenPlayer:
         #repeat single song
         elif (self.repeat_mode == 2):
             self.next_index = self.index
-        #no repeat mode
+        # no repeat mode
         else:
             if (self.index == self.queue_len - 1):
                 self.next_index = math.nan
@@ -221,7 +222,7 @@ class TaihenPlayer:
         self.index = index
         if math.isnan(self.index):
             pass
-        #Play current index
+        # Play current index
         try:
             details = self.get_url_and_name(index)
         except:
