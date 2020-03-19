@@ -8,7 +8,7 @@ Special thanks for these libraries and their contributors:
 - python-mpv
 '''
 
-from .music_api import YoutubePlayer
+from .music_api import TaihenPlayer
 from .ui import player_ui
 from .settings import PL_DIR
 import os

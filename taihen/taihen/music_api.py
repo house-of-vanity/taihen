@@ -7,41 +7,45 @@ Special thanks for these libraries and their contributors:
 - pafy
 - mpv
 '''
-import pafy
+#import pafy
 import mpv
 import pickle
 import sys
 import os
 import time
-import threading
-from random import randint
-import math
-from .settings import PL_DIR
 import locale
+import threading
+import math
+from random import randint
+from .settings import PL_DIR
+from .library import Library
+
 
 def structure_time(seconds, minutes, hours):
-    if(seconds < 10 and hours == 0 and minutes < 10):
+    if (seconds < 10 and hours == 0 and minutes < 10):
         structured_time = "0" + str(minutes) + ":0" + str(seconds)
-    elif(hours == 0 and minutes < 10):
-        structured_time = "0" + str(minutes)+ ":" + str(seconds)
-    elif(seconds < 10):
-        structured_time = str((hours*60) + minutes) + ":0" + str(seconds)
+    elif (hours == 0 and minutes < 10):
+        structured_time = "0" + str(minutes) + ":" + str(seconds)
+    elif (seconds < 10):
+        structured_time = str((hours * 60) + minutes) + ":0" + str(seconds)
     else:
-        structured_time = str((hours*60) + minutes) + ":" + str(seconds)
+        structured_time = str((hours * 60) + minutes) + ":" + str(seconds)
     return structured_time
 
+
 def structure_time_len(seconds, minutes):
-    if(seconds < 10 and minutes < 10):
+    if (seconds < 10 and minutes < 10):
         structured_time = "0" + str(minutes) + ":0" + str(seconds)
-    elif(minutes < 10):
+    elif (minutes < 10):
         structured_time = "0" + str(minutes) + ":" + str(seconds)
-    elif(seconds < 10):
+    elif (seconds < 10):
         structured_time = str(minutes) + ":0" + str(seconds)
     else:
         structured_time = str(minutes) + ":" + str(seconds)
     return structured_time
 
-class YoutubePlayer:
+
+class TaihenPlayer:
     def __init__(self):
         #URL of list
         self.url = ""
@@ -84,19 +88,18 @@ class YoutubePlayer:
         locale.setlocale(locale.LC_NUMERIC, "C")
         self.player = None
 
-
     def get_index(self):
         return self.index
 
     def set_repeat_mode(self, mode):
         #If invalid, set return mode to no repeat
-        if(int(mode) not in [1,2,3]):
+        if (int(mode) not in [1, 2, 3]):
             self.repeat_mode = 1
         else:
             self.repeat_mode = int(mode)
 
     def play_random(self):
-        if(self._random):
+        if (self._random):
             self._random = False
         else:
             self._random = True
@@ -104,7 +107,7 @@ class YoutubePlayer:
     def get_repeat_mode(self):
         return self.repeat_mode
 
-    def initPlaylist(self,url):
+    def initPlaylist(self, url):
         self.url = url
         self.playlist = pafy.get_playlist(url)
         self.queue_len = len(self.playlist['items'])
@@ -115,20 +118,19 @@ class YoutubePlayer:
         except:
             return False
         self.saved_lists.append(filename)
-        with open(filename,'wb') as handler:
+        with open(filename, 'wb') as handler:
             pickle.dump({
-                        'url' : self.url,
-                        'name' : self.playlist['title']
-                        },
-                        handler,pickle.HIGHEST_PROTOCOL)
+                'url': self.url,
+                'name': self.playlist['title']
+            }, handler, pickle.HIGHEST_PROTOCOL)
         return True
 
     def load_saved_playlist(self, list_name):
         if list_name not in self.saved_lists:
             return False
         #Load list pickle object
-        filename = PL_DIR +"/" + list_name
-        with open(filename,'rb') as handler:
+        filename = PL_DIR + "/" + list_name
+        with open(filename, 'rb') as handler:
             url = pickle.load(handler)['url']
         self.playlist = pafy.get_playlist(url)
         self.queue_len = len(self.playlist['items'])
@@ -140,47 +142,46 @@ class YoutubePlayer:
     def get_list_data(self):
         self.list_data = []
         ##In case of empty/inexistent list
-        if(not self.playlist):
+        if (not self.playlist):
             return self.list_data
         for every_object in self.playlist['items']:
             temp_details = {}
             temp_details["title"] = str(every_object['pafy'].title)
             temp_details['author'] = str(every_object['pafy'].author)
             time = str(every_object['pafy'].duration).split(":")
-            temp_details['duration'] = structure_time(seconds = int(time[2]),
-                                                      minutes = int(time[1]),
-                                                      hours = int(time[0])
-                                                      )
+            temp_details['duration'] = structure_time(seconds=int(time[2]),
+                                                      minutes=int(time[1]),
+                                                      hours=int(time[0]))
             self.list_data.append(temp_details)
         return self.list_data
 
-    def get_url_and_name(self,index):
+    def get_url_and_name(self, index):
         return [
-                self.playlist['items'][int(index)]['pafy'].getbestaudio().url,
-                self.playlist['items'][int(index)]['pafy'].title
-                ]
+            'http://localhost:12345/static/Buckethead/2019%20-%20Sigil%20Soundtrack/04.%20The%20Patrolman.mp3',
+            self.playlist['items'][int(index)]['pafy'].title
+        ]
 
     def get_next_index(self):
         try:
             assert isinstance(self.index, int), "invalid index"
         except AssertionError:
             self.index = 0
-        if(self._random):
+        if (self._random):
             self.next_index = randint(1, int(self.queue_len) - 1)
             return int(self.next_index)
         self.index = int(self.index)
         #repeat playlist
-        if(self.repeat_mode == 3):
-            if(self.index == self.queue_len - 1):
+        if (self.repeat_mode == 3):
+            if (self.index == self.queue_len - 1):
                 self.next_index = 0
             else:
                 self.next_index = self.index + 1
         #repeat single song
-        elif(self.repeat_mode == 2):
+        elif (self.repeat_mode == 2):
             self.next_index = self.index
         #no repeat mode
         else:
-            if(self.index == self.queue_len - 1):
+            if (self.index == self.queue_len - 1):
                 self.next_index = math.nan
             else:
                 self.next_index = self.index + 1
@@ -191,7 +192,7 @@ class YoutubePlayer:
             assert isinstance(self.index, int), "invalid index"
         except AssertionError:
             self.index = 0
-        if(self.index <= 0):
+        if self.index <= 0:
             self.prev_index = math.nan
         else:
             self.prev_index = self.index - 1
@@ -224,16 +225,18 @@ class YoutubePlayer:
         try:
             details = self.get_url_and_name(index)
         except:
-            print("Couldn't fetch this song. Playing next.") #This needs to be in a new urwid error floating box. Will fix it later.
+            print(
+                "Couldn't fetch this song. Playing next."
+            )  #This needs to be in a new urwid error floating box. Will fix it later.
             self.play_next()
             return True
         url = details[0]
         self._currentSong = details[1]
-        if(url==False):
+        if not url:
             return False
         self.player.play(url)
         #Remove lock on continous_player
-        while(not self.is_playing()):
+        while (not self.is_playing()):
             self.toggle_lock(True)
         self.toggle_lock(False)
         return True
@@ -252,7 +255,9 @@ class YoutubePlayer:
             try:
                 total_seconds = round(self.player.duration)
             except:
-                print("Couldn't fetch this song. Playing next.") #This needs to be in a new urwid error floating box. Will fix it later.
+                print(
+                    "Couldn't fetch this song. Playing next."
+                )  #This needs to be in a new urwid error floating box. Will fix it later.
                 self.play_next()
         minutes = int(total_seconds / 60)
         seconds = total_seconds % 60
@@ -265,9 +270,9 @@ class YoutubePlayer:
         seconds = cur_seconds % 60
         self.time_details['cur_time'] = structure_time_len(seconds, minutes)
 
-        if(total_seconds is not 0):
-            self.time_details['percentage'] = ( cur_seconds / total_seconds
-                                              ) * 100
+        if (total_seconds != 0):
+            self.time_details['percentage'] = (cur_seconds /
+                                               total_seconds) * 100
         else:
             self.time_details['percentage'] = 0
         return self.time_details
@@ -275,24 +280,24 @@ class YoutubePlayer:
     def start_playing(self):
         if not self.player:
             self.player = mpv.MPV(video=False)
-        thread = threading.Thread(target = self.continous_player, args={})
+        thread = threading.Thread(target=self.continous_player, args={})
         thread.daemon = True
         thread.start()
 
     def continous_player(self):
-        while(True):
+        while (True):
             time.sleep(2)
-            if(self.check_togglerLock()):
+            if (self.check_togglerLock()):
                 continue
-            if(self.is_playing() == False and self.check_lock() == False):
+            if (self.is_playing() == False and self.check_lock() == False):
                 self.toggle_lock(True)
-                if(self._new):
+                if (self._new):
                     self._new = False
                     self.index = 0
                     self.play_at_index(0)
                 else:
                     _next = self.get_next_index()
-                    if(math.isnan(_next)):
+                    if (math.isnan(_next)):
                         self.stop()
                     else:
                         self.play_at_index(int(_next))
@@ -309,14 +314,14 @@ class YoutubePlayer:
     def play_next(self):
         self.stop()
         _next_index = self.get_next_index()
-        if(not _next_index):
+        if (not _next_index):
             return False
         self.play_at_index(_next_index)
 
     def play_prev(self):
         self.stop()
         _prev_index = self.get_prev_index()
-        if(math.isnan(_prev_index)):
+        if (math.isnan(_prev_index)):
             # print("nothing previous here")
             return False
         self.play_at_index(_prev_index)
@@ -347,7 +352,7 @@ class YoutubePlayer:
         return self.volume
 
     def set_volume(self, volume):
-        assert(0 < volume < 100)
+        assert (0 < volume < 100)
         self.volume = volume
         self.player['volume'] = volume
         return True
