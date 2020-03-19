@@ -9,9 +9,9 @@ Special thanks for these libraries and their contributors:
 '''
 import os
 import urwid
-from taihen.music_api import TaihenPlayer
-from taihen.ui import player_ui
-from taihen.settings import PL_DIR
+from .music_api import TaihenPlayer
+from .ui import player_ui
+from .settings import PL_DIR
 
 # Palette for the urwid UI
 palette = [

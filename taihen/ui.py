@@ -36,7 +36,8 @@ class player_ui(TaihenPlayer):
         self._isplayerUI = False
         self._play_pause_lock = False
         self.bottom = None
-        self.top = None
+        #self.top = None
+        self.top = self.start_screen()
 
     def update_name(self, _loop, _data):
         global LIST_LOCK
@@ -108,7 +109,7 @@ class player_ui(TaihenPlayer):
     def draw_ui(self):
         #Draws the start UI
         self.bottom = self.make_player_ui()
-        self.top = self.start_screen()
+        #self.top = self.start_screen()
         self.ui_object = urwid.Padding(urwid.Overlay(self.top,
                                                      self.bottom,
                                                      'center',
@@ -125,6 +126,107 @@ class player_ui(TaihenPlayer):
                                        left=0)
         return self.ui_object
 
+    def start_screen(self):
+        #Ovrlay top screen at start
+        add_library = urwid.Button("New library [Enter URL]")
+        urwid.connect_signal(add_library, 'click', self.input_screen)
+        txt1 = urwid.AttrMap(add_library, None, focus_map='reversed')
+        load_library = urwid.Button("Load saved playlist")
+        urwid.connect_signal(load_library, 'click', self.load_list_screen)
+        txt2 = urwid.AttrMap(load_library, None, focus_map='reversed')
+        start_list = urwid.SimpleFocusListWalker([txt1, txt2])
+        box = urwid.ListBox(start_list)
+        selection = urwid.LineBox(box,
+                                  title='',
+                                  title_align='center',
+                                  tlcorner='┌',
+                                  tline='─',
+                                  lline='│',
+                                  trcorner='┐',
+                                  blcorner='└',
+                                  rline='│',
+                                  bline='─',
+                                  brcorner='┘')
+        selection_with_padding = urwid.Padding(selection, left=2, right=2)
+        return selection_with_padding
+
+    def input_screen(self, button):
+        #overlay second screen after start case1
+        txt = urwid.Text("Enter the URL below: ")
+        url_field = urwid.Edit(caption='',
+                               edit_text='https://',
+                               multiline=False,
+                               align='left',
+                               wrap='space',
+                               allow_tab=False,
+                               edit_pos=None,
+                               layout=None,
+                               mask=None)
+        btn = urwid.Button("OK", user_data=None)
+        url_button = urwid.AttrMap(btn, None, focus_map='reversed')
+        urwid.connect_signal(btn, 'click', self.input_url, url_field)
+        wid = urwid.Pile([txt, url_field, url_button])
+        new = urwid.Filler(urwid.AttrMap(wid, None, focus_map=''))
+        ok_screen_box = urwid.LineBox(new,
+                                      title='',
+                                      title_align='center',
+                                      tlcorner='┌',
+                                      tline='─',
+                                      lline='│',
+                                      trcorner='┐',
+                                      blcorner='└',
+                                      rline='│',
+                                      bline='─',
+                                      brcorner='┘')
+        self.top.original_widget = ok_screen_box
+
+    def show_help(self):
+        add_library = urwid.Button("New library [Enter URL]")
+        urwid.connect_signal(add_library, 'click', self.input_screen)
+        txt1 = urwid.AttrMap(add_library, None, focus_map='reversed')
+        load_library = urwid.Button("Load saved playlist")
+        urwid.connect_signal(load_library, 'click', self.load_list_screen)
+        txt2 = urwid.AttrMap(load_library, None, focus_map='reversed')
+        start_list = urwid.SimpleFocusListWalker([txt1, txt2])
+        box = urwid.ListBox(start_list)
+        selection = urwid.LineBox(box,
+                                  title='',
+                                  title_align='center',
+                                  tlcorner='┌',
+                                  tline='─',
+                                  lline='│',
+                                  trcorner='┐',
+                                  blcorner='└',
+                                  rline='│',
+                                  bline='─',
+                                  brcorner='┘')
+        selection_with_padding = urwid.Padding(selection, left=2, right=2)
+        self.top = selection_with_padding
+
+    def load_list_screen(self, button):
+        #overlay second screen after start case2
+        txt = urwid.Text("Choose from the following:- ")
+        _list = self.player_object.get_saved_lists()
+        saved_list = []
+        for every_list in _list:
+            b = urwid.Button(str(every_list).rstrip(), user_data=None)
+            urwid.connect_signal(b, 'click', self.list_load)
+            saved_list.append(urwid.AttrMap(b, None, focus_map='reversed'))
+        box = urwid.ListBox(urwid.SimpleFocusListWalker(saved_list))
+        list_box = urwid.LineBox(box,
+                                 title='',
+                                 title_align='center',
+                                 tlcorner='┌',
+                                 tline='─',
+                                 lline='│',
+                                 trcorner='┐',
+                                 blcorner='└',
+                                 rline='│',
+                                 bline='─',
+                                 brcorner='┘')
+        list_box_padding = urwid.Padding(list_box, right=0, left=0)
+        self.top.original_widget = list_box_padding
+
     def make_player_ui(self):
         #Draws the main player UI
         #Header
@@ -132,6 +234,7 @@ class player_ui(TaihenPlayer):
         self.time_widget = urwid.Text("--/--", align='left')
         self.state_widget = urwid.Text("Playing: None", align='center')
         self.mode_widget = urwid.Text(u"Mode: Repeat off", align='right')
+
         """
         self.volume_widget = urwid.Text(f"Volume: {(vol-1)*'█'}{(9-vol)*'░'}",
                                  align='right')
@@ -206,113 +309,6 @@ class player_ui(TaihenPlayer):
                                        footer=footer_widget,
                                        focus_part='body')
         return urwid.Padding(player_ui_object, right=0, left=0)
-
-    def start_screen(self):
-        #Ovrlay top screen at start
-        add_library = urwid.Button("New library [Enter URL]")
-        urwid.connect_signal(add_library, 'click', self.input_screen)
-        txt1 = urwid.AttrMap(add_library, None, focus_map='reversed')
-        load_library = urwid.Button("Load saved playlist")
-        urwid.connect_signal(load_library, 'click', self.load_list_screen)
-        txt2 = urwid.AttrMap(load_library, None, focus_map='reversed')
-        start_list = urwid.SimpleFocusListWalker([txt1, txt2])
-        box = urwid.ListBox(start_list)
-        selection = urwid.LineBox(box,
-                                  title='',
-                                  title_align='center',
-                                  tlcorner='┌',
-                                  tline='─',
-                                  lline='│',
-                                  trcorner='┐',
-                                  blcorner='└',
-                                  rline='│',
-                                  bline='─',
-                                  brcorner='┘')
-        selection_with_padding = urwid.Padding(selection, left=2, right=2)
-        return selection_with_padding
-
-    def input_screen(self, button):
-        #overlay second screen after start case1
-        txt = urwid.Text("Enter the URL below: ")
-        url_field = urwid.Edit(caption='http://',
-                               edit_text='https://',
-                               multiline=False,
-                               align='left',
-                               wrap='space',
-                               allow_tab=False,
-                               edit_pos=None,
-                               layout=None,
-                               mask=None)
-        btn = urwid.Button("OK", user_data=None)
-        url_button = urwid.AttrMap(btn, None, focus_map='reversed')
-        urwid.connect_signal(btn, 'click', self.input_url, url_field)
-        wid = urwid.Pile([txt, url_field, url_button])
-        new = urwid.Filler(urwid.AttrMap(wid, None, focus_map=''))
-        ok_screen_box = urwid.LineBox(new,
-                                      title='',
-                                      title_align='center',
-                                      tlcorner='┌',
-                                      tline='─',
-                                      lline='│',
-                                      trcorner='┐',
-                                      blcorner='└',
-                                      rline='│',
-                                      bline='─',
-                                      brcorner='┘')
-        self.top.original_widget = ok_screen_box
-
-    def show_help(self):
-        txt = urwid.Text("Enter the URL below: ")
-        url_field = urwid.Edit(caption='http://',
-                               edit_text='https://',
-                               multiline=False,
-                               align='left',
-                               wrap='space',
-                               allow_tab=False,
-                               edit_pos=None,
-                               layout=None,
-                               mask=None)
-        btn = urwid.Button("OK", user_data=None)
-        url_button = urwid.AttrMap(btn, None, focus_map='reversed')
-        urwid.connect_signal(btn, 'click', self.input_url, url_field)
-        wid = urwid.Pile([txt, url_field, url_button])
-        new = urwid.Filler(urwid.AttrMap(wid, None, focus_map=''))
-        ok_screen_box = urwid.LineBox(new,
-                                      title='',
-                                      title_align='center',
-                                      tlcorner='┌',
-                                      tline='─',
-                                      lline='│',
-                                      trcorner='┐',
-                                      blcorner='└',
-                                      rline='│',
-                                      bline='─',
-                                      brcorner='┘')
-        self.top.original_widget = ok_screen_box
-
-    def load_list_screen(self, button):
-        #overlay second screen after start case2
-        txt = urwid.Text("Choose from the following:- ")
-        _list = self.player_object.get_saved_lists()
-        saved_list = []
-        for every_list in _list:
-            b = urwid.Button(str(every_list).rstrip(), user_data=None)
-            urwid.connect_signal(b, 'click', self.list_load)
-            saved_list.append(urwid.AttrMap(b, None, focus_map='reversed'))
-        box = urwid.ListBox(urwid.SimpleFocusListWalker(saved_list))
-        list_box = urwid.LineBox(box,
-                                 title='',
-                                 title_align='center',
-                                 tlcorner='┌',
-                                 tline='─',
-                                 lline='│',
-                                 trcorner='┐',
-                                 blcorner='└',
-                                 rline='│',
-                                 bline='─',
-                                 brcorner='┘')
-        list_box_padding = urwid.Padding(list_box, right=0, left=0)
-        self.top.original_widget = list_box_padding
 
     def list_load(self, button):
         self.player_object.load_saved_playlist(
@@ -390,6 +386,8 @@ class player_ui(TaihenPlayer):
             'e':
             self.player_object.play_last,
             ' ':
+            self.toggle_playing,
+            'c':
             self.toggle_playing,
             's':
             self.save_list,
