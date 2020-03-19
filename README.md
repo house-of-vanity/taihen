@@ -1,59 +1,42 @@
-# ytTerm player (BETA)
-Play youtube playlists as audio on linux terminal
+# 大変 Taihen Player
 
-[![Build Status](https://travis-ci.com/SamSamhuns/yTermPlayer.svg?branch=master)](https://travis-ci.com/SamSamhuns/yTermPlayer)
-[![PyPI version](https://badge.fury.io/py/yTermPlayer.svg)](https://badge.fury.io/py/yTermPlayer)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/yTermPlayer.svg)](https://pypi.python.org/pypi/yTermPlayer/)
-[![PyPI license](https://img.shields.io/pypi/l/yTermPlayer.svg)](https://pypi.python.org/pypi/yTermPlayer/)
+It's fork of [yTermPlayer](https://github.com/TimeTraveller-San/yTermPlayer)
+
+Play your private library on linux terminal.
 
 ## About
-ytTerm player is a terminal youtube music player. It's completely written in python.
+Taihen Player is a terminal music player. It able to play audio only using [playongo](https://github.com/nixargh/playongo) media library. It's completely written in python.
 
 **UI**: Made using a wrapper for curses called [urwid][urwid]
 
 **Player**: Handled using [python-mpv](https://github.com/jaseg/python-mpv)
 
-**Stream fetch**: Audio streams from youtube are fetched using [pafy][pafy]
-
 Features:
-- Import and play youtube playlists on terminal
+- Import and play remote music on terminal.
 - Save playlists in library
 - Use several playback modes such as repeat one, repeat list, random
-- Download complete list (coming soon)
 
 ### Installation
 
-Set up a virtual environment and install the dependencies:
 ```sh
 $ pip install -r requirements.txt
-```
+$ pip setup.py install
 
-python3 pip :-
-```sh
-$ pip install ytermplayer
-$ yterm
-```
-
-or Git clone :-
-```sh
-$ git clone https://github.com/TimeTraveller-San/yTermPlayer
-$ cd yTermPlayer/yTermPlayer/
-$ python __main__.py
+$ taihen # run player
 ```
 
 ### Dependencies
 
 Python 3
 
-ytTerm player uses a number of open source projects to work properly:
+Taihen Player player uses a number of open source projects to work properly:
 
 *   [urwid][urwid]
 *   [python-mpv](https://github.com/jaseg/python-mpv)
-*   [pafy][pafy]
 *   python3
 *   mpv player (sudo pacman -S mpv) or (sudo apt-get install mpv)
 
-ytTerm player itself is open source. Feel free to modify and distribute the code
+Taihen Player player itself is open source. Feel free to modify and distribute the code
 
 ### KeyBindings
 

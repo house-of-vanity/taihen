@@ -14,7 +14,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     license="GPLv3",
     install_requires=[
-        'pafy>=0.5.4',
         'python-dateutil>=2.7.5',
         'python-mpv>=0.3.9',
         'urwid>=2.0.1',
