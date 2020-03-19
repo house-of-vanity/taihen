@@ -35,7 +35,8 @@ class player_ui(TaihenPlayer):
         self.player_object = TaihenPlayer()
         self._isplayerUI = False
         self._play_pause_lock = False
-        self.top = self.start_screen()
+        self.bottom = None
+        self.top = None
 
     def update_name(self, _loop, _data):
         global LIST_LOCK
@@ -73,11 +74,11 @@ class player_ui(TaihenPlayer):
         #Update player second by second things
         if (self._isplayerUI):
             if (not self._play_pause_lock):
-                self.txt2_2.set_text(
+                self.state_widget.set_text(
                     "Playing: " + str(self.player_object.current_song_name()))
             temp = self.player_object.get_time_details()
             self.pb.set_completion(temp['percentage'])
-            self.txt2_1.set_text(
+            self.time_widget.set_text(
                 str(temp['cur_time'] + "/" + str(temp['total_time'])))
             self.pb_text.set_text(
                 str(temp['cur_time'] + "/" + str(temp['total_time'])))
@@ -128,30 +129,36 @@ class player_ui(TaihenPlayer):
         #Draws the main player UI
         #Header
         vol = self.player_object.volume // 10
-        self.txt2_1 = urwid.Text("--/--", align='left')
-        self.txt2_2 = urwid.Text("Playing: None", align='center')
-        self.txt2_3 = urwid.Text(u"Mode: Repeat off", align='right')
-        self.txt2_4 = urwid.Text(f"Volume: {(vol-1)*'█'}{(9-vol)*'░'}",
+        self.time_widget = urwid.Text("--/--", align='left')
+        self.state_widget = urwid.Text("Playing: None", align='center')
+        self.mode_widget = urwid.Text(u"Mode: Repeat off", align='right')
+        """
+        self.volume_widget = urwid.Text(f"Volume: {(vol-1)*'█'}{(9-vol)*'░'}",
                                  align='right')
+        """
         cols = urwid.Columns(
-            [self.txt2_1, self.txt2_2, self.txt2_3, self.txt2_4],
+            #[self.time_widget, self.state_widget, self.mode_widget, self.volume_widget],
+            [
+                self.time_widget,
+                self.state_widget,
+                self.mode_widget,
+            ],
             dividechars=0,
             focus_column=None,
             min_width=1,
             box_columns=None)
         head_widget = urwid.Pile([cols], focus_item=None)
-        head_final_widget = self.body = urwid.LineBox(
-            head_widget,
-            title='Terminal Youtube Player',
-            title_align='center',
-            tlcorner='┌',
-            tline='─',
-            lline='│',
-            trcorner='┐',
-            blcorner='└',
-            rline='│',
-            bline='─',
-            brcorner='┘')
+        head_final_widget = self.body = urwid.LineBox(head_widget,
+                                                      title='大変 Player',
+                                                      title_align='center',
+                                                      tlcorner='┌',
+                                                      tline='─',
+                                                      lline='│',
+                                                      trcorner='┐',
+                                                      blcorner='└',
+                                                      rline='│',
+                                                      bline='─',
+                                                      brcorner='┘')
         #body
         self.list = urwid.SimpleFocusListWalker([])
         heading = urwid.Columns([(6, urwid.Text(u"Track", align='left')),
@@ -205,10 +212,10 @@ class player_ui(TaihenPlayer):
         add_library = urwid.Button("New library [Enter URL]")
         urwid.connect_signal(add_library, 'click', self.input_screen)
         txt1 = urwid.AttrMap(add_library, None, focus_map='reversed')
-        """txt2_2=urwid.Button("Load saved playlist")
-        urwid.connect_signal(txt2_2, 'click', self.load_list_screen)
-        txt2 = urwid.AttrMap(txt2_2,None,focus_map='reversed')"""
-        start_list = urwid.SimpleFocusListWalker([txt1])
+        load_library = urwid.Button("Load saved playlist")
+        urwid.connect_signal(load_library, 'click', self.load_list_screen)
+        txt2 = urwid.AttrMap(load_library, None, focus_map='reversed')
+        start_list = urwid.SimpleFocusListWalker([txt1, txt2])
         box = urwid.ListBox(start_list)
         selection = urwid.LineBox(box,
                                   title='',
@@ -227,8 +234,37 @@ class player_ui(TaihenPlayer):
     def input_screen(self, button):
         #overlay second screen after start case1
         txt = urwid.Text("Enter the URL below: ")
-        url_field = urwid.Edit(caption='',
-                               edit_text='',
+        url_field = urwid.Edit(caption='http://',
+                               edit_text='https://',
+                               multiline=False,
+                               align='left',
+                               wrap='space',
+                               allow_tab=False,
+                               edit_pos=None,
+                               layout=None,
+                               mask=None)
+        btn = urwid.Button("OK", user_data=None)
+        url_button = urwid.AttrMap(btn, None, focus_map='reversed')
+        urwid.connect_signal(btn, 'click', self.input_url, url_field)
+        wid = urwid.Pile([txt, url_field, url_button])
+        new = urwid.Filler(urwid.AttrMap(wid, None, focus_map=''))
+        ok_screen_box = urwid.LineBox(new,
+                                      title='',
+                                      title_align='center',
+                                      tlcorner='┌',
+                                      tline='─',
+                                      lline='│',
+                                      trcorner='┐',
+                                      blcorner='└',
+                                      rline='│',
+                                      bline='─',
+                                      brcorner='┘')
+        self.top.original_widget = ok_screen_box
+
+    def show_help(self):
+        txt = urwid.Text("Enter the URL below: ")
+        url_field = urwid.Edit(caption='http://',
+                               edit_text='https://',
                                multiline=False,
                                align='left',
                                wrap='space',
@@ -292,7 +328,7 @@ class player_ui(TaihenPlayer):
 
     def init_list_and_listui(self, url):
         #New list has been loaded,remake the UI
-        self.player_object.initPlaylist(url)
+        self.player_object.initLibrary(url)
         self.player_object.start_playing()
         self._list_updated = True
         self._isplayerUI = True
@@ -300,19 +336,19 @@ class player_ui(TaihenPlayer):
 
     #Utility functions down below
     def change_play_mode_to_repeat_one(self):
-        self.txt2_3.set_text("Mode: Repeat one")
+        self.mode_widget.set_text("Mode: Repeat one")
         self.player_object.set_repeat_mode(2)
 
     def change_play_mode_to_repeat_list(self):
-        self.txt2_3.set_text("Mode: Repeat list")
+        self.mode_widget.set_text("Mode: Repeat list")
         self.player_object.set_repeat_mode(3)
 
     def change_play_mode_to_repeat_off(self):
-        self.txt2_3.set_text("Mode: Repeat off")
+        self.mode_widget.set_text("Mode: Repeat off")
         self.player_object.set_repeat_mode(1)
 
     def change_play_mode_to_random(self):
-        self.txt2_3.set_text("Mode: Random")
+        self.mode_widget.set_text("Mode: Random")
         self.player_object.play_random()
 
     def toggle_playing(self):
@@ -321,9 +357,10 @@ class player_ui(TaihenPlayer):
         else:
             self._play_pause_lock = True
         self.player_object.toggle_playing()
-        self.txt2_2.set_text("[PAUSED]: " +
-                             str(self.player_object.current_song_name()))
+        self.state_widget.set_text("[PAUSED]: " +
+                                   str(self.player_object.current_song_name()))
 
+    """
     def volume_up(self):
         self.player_object.volume_up()
         self.update_volume_bar()
@@ -334,28 +371,42 @@ class player_ui(TaihenPlayer):
 
     def update_volume_bar(self):
         vol = self.player_object.volume // 10
-        self.txt2_4.set_text(f"Volume: {(vol-1)*'█'}{(9-vol)*'░'}")
+        self.volume_widget.set_text(f"Volume: {(vol-1)*'█'}{(9-vol)*'░'}")
+    """
 
     def save_list(self):
-
         self.player_object.save_current_list()
 
     def handle_keys(self, key):
         if (key == 'q'):
             raise urwid.ExitMainLoop()
         key_dict = {
-            'n': self.player_object.play_next,
-            'p': self.player_object.play_prev,
-            'h': self.player_object.play_first,
-            'e': self.player_object.play_last,
-            ' ': self.toggle_playing,
-            's': self.save_list,
-            '1': self.change_play_mode_to_repeat_one,
-            '2': self.change_play_mode_to_repeat_list,
-            '3': self.change_play_mode_to_repeat_off,
-            'r': self.change_play_mode_to_random,
+            'n':
+            self.player_object.play_next,
+            'p':
+            self.player_object.play_prev,
+            'h':
+            self.player_object.play_first,
+            'e':
+            self.player_object.play_last,
+            ' ':
+            self.toggle_playing,
+            's':
+            self.save_list,
+            '1':
+            self.change_play_mode_to_repeat_one,
+            '2':
+            self.change_play_mode_to_repeat_list,
+            '3':
+            self.change_play_mode_to_repeat_off,
+            'r':
+            self.change_play_mode_to_random,
+            """
             'u': self.volume_up,
             'd': self.volume_down,
+            """
+            'h':
+            self.show_help,
         }
         try:
             key_dict[key]()
@@ -379,6 +430,9 @@ class my_Text(urwid.Text):
 if __name__ == "__main__":
     new_player = player_ui()
     ui = new_player.draw_ui()
-    loop = urwid.MainLoop(ui, palette, unhandled_input=new_player.handle_keys)
+    loop = urwid.MainLoop(ui,
+                          palette,
+                          unhandled_input=new_player.handle_keys,
+                          handle_mouse=False)
     loop.set_alarm_in(2, new_player.update_name)
     loop.run()

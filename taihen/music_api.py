@@ -51,7 +51,7 @@ class TaihenPlayer:
         # URL of list
         self.url = ""
         # Player volume
-        self.volume = 70
+        self.volume = 100
         # Set unlock on continous_player
         self._lock = False
         # Semaphore for the shared _lock variable
@@ -88,6 +88,7 @@ class TaihenPlayer:
         # Initialize MPV player
         locale.setlocale(locale.LC_NUMERIC, "C")
         self.player = None
+        self.library = None
 
     def get_index(self):
         return self.index
@@ -108,10 +109,12 @@ class TaihenPlayer:
     def get_repeat_mode(self):
         return self.repeat_mode
 
-    def initPlaylist(self, url):
+    def initLibrary(self, url):
+        if not self.library:
+            self.library = Library(url)
         self.url = url
-        self.playlist = pafy.get_playlist(url)
-        self.queue_len = len(self.playlist['items'])
+        self.playlist = self.library.get_library()
+        self.queue_len = len(self.playlist)
 
     def save_current_list(self):
         try:
@@ -133,7 +136,9 @@ class TaihenPlayer:
         filename = PL_DIR + "/" + list_name
         with open(filename, 'rb') as handler:
             url = pickle.load(handler)['url']
-        self.playlist = pafy.get_playlist(url)
+        if not self.library:
+            self.library = Library(url)
+        self.playlist = self.library.get_library()
         self.queue_len = len(self.playlist['items'])
         return True
 
@@ -145,21 +150,23 @@ class TaihenPlayer:
         ##In case of empty/inexistent list
         if (not self.playlist):
             return self.list_data
-        for every_object in self.playlist['items']:
-            temp_details = {}
-            temp_details["title"] = str(every_object['pafy'].title)
-            temp_details['author'] = str(every_object['pafy'].author)
-            time = str(every_object['pafy'].duration).split(":")
-            temp_details['duration'] = structure_time(seconds=int(time[2]),
-                                                      minutes=int(time[1]),
-                                                      hours=int(time[0]))
+        for item in self.playlist['items']:
+            temp_details = dict()
+            temp_details["title"] = item.get('name', 'no_name')
+            temp_details['author'] = item.get('artist', 'no_artist')
+            # FIX ME
+            duration = [0, 10, 10]
+            temp_details['duration'] = structure_time(seconds=int(duration[2]),
+                                                      minutes=int(duration[1]),
+                                                      hours=int(duration[0]))
             self.list_data.append(temp_details)
         return self.list_data
 
     def get_url_and_name(self, index):
         return [
-            'http://localhost:12345/static/Buckethead/2019%20-%20Sigil%20Soundtrack/04.%20The%20Patrolman.mp3',
-            self.playlist['items'][int(index)]['pafy'].title
+            #'http://localhost:12345/static/Dying%20Fetus%20-%20Wrong%20One%20To%20Fuck%20With%20(2017)/02.%20Panic%20Amongst%20the%20Herd.mp3',
+            f"{self.library.url}/{self.playlist['items'][int(index)]['path']}",
+            self.playlist['items'][int(index)]['name']
         ]
 
     def get_next_index(self):
