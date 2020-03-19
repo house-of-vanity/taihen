@@ -5,7 +5,7 @@ It's fork of [yTermPlayer](https://github.com/TimeTraveller-San/yTermPlayer)
 Play your private library on linux terminal.
 
 ## About
-Taihen Player is a terminal music player. It able to play audio only using [playongo](https://github.com/nixargh/playongo) media library. It's completely written in python.
+Taihen Player is a terminal music player. It is able to play audio only using [playongo](https://github.com/nixargh/playongo) media library. It's completely written in python.
 
 **UI**: Made using a wrapper for curses called [urwid][urwid]
 
