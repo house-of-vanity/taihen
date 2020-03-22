@@ -20,8 +20,6 @@ from random import randint
 from .settings import PL_DIR
 from .library import Library
 
-
-
 def structure_time(seconds, minutes, hours):
     if (seconds < 10 and hours == 0 and minutes < 10):
         structured_time = "0" + str(minutes) + ":0" + str(seconds)
@@ -163,9 +161,12 @@ class TaihenPlayer:
         return self.list_data
 
     def get_url_and_name(self, index):
+        url = f"{self.library.url}/{self.playlist['items'][int(index)]['path']}"
+        
+        url = self.library.get_url(index)
+        #url = '/home/abogomyakov/MUS/Allie X - COLLXTION I (Deluxe Edition) (2015) WEB FLAC/01 Hello.flac'
         return [
-            #'http://localhost:12345/static/Dying%20Fetus%20-%20Wrong%20One%20To%20Fuck%20With%20(2017)/02.%20Panic%20Amongst%20the%20Herd.mp3',
-            f"{self.library.url}/{self.playlist['items'][int(index)]['path']}",
+            url,
             self.playlist['items'][int(index)]['name']
         ]
 
@@ -247,6 +248,10 @@ class TaihenPlayer:
         while (not self.is_playing()):
             self.toggle_lock(True)
         self.toggle_lock(False)
+        self.next_index = self.get_next_index()
+        # preload next track
+        cache_thread = threading.Thread(target=self.library.precache, args=(self.next_index,))
+        cache_thread.start()
         return True
 
     def stop(self):
@@ -321,7 +326,8 @@ class TaihenPlayer:
 
     def play_next(self):
         self.stop()
-        _next_index = self.get_next_index()
+        #_next_index = self.get_next_index()
+        _next_index = self.next_index
         if (not _next_index):
             return False
         self.play_at_index(_next_index)
